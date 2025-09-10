@@ -45,18 +45,23 @@ export interface Order {
   status: 'processing' | 'dispatched' | 'delivered' | 'cancelled';
   total: number;
   payment_method: 'cod' | 'momo' | 'orange';
+  payment_transaction_id?: string;
   shipping_address: string;
   phone: string;
-  items: OrderItem[];
+  notes?: string;
+  order_items?: OrderItem[];
   created_at: string;
   updated_at: string;
 }
 
 export interface OrderItem {
+  id?: string;
+  order_id?: string;
   product_id: string;
   quantity: number;
   price: number;
   product?: Product;
+  created_at?: string;
 }
 
 export interface User {

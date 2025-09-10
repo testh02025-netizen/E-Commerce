@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, CreditCard, Smartphone, Phone, MapPin, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useStore } from '../../store/useStore';
-import { db } from '../../lib/supabase';
+import { db, supabase } from '../../lib/supabase';
 import { paymentMethods, MobileMoneyProcessor, CODProcessor } from '../../utils/payments';
 
 interface CheckoutFormProps {

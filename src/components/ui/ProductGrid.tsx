@@ -1,3 +1,4 @@
+import { Package } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 import type { Product } from '../../types';
 

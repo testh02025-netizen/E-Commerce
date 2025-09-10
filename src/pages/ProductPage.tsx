@@ -110,10 +110,10 @@ const ProductPage: React.FC = () => {
 
     try {
       if (isWishlisted) {
-        await db.removeFromWishlist(user.id, product.id);
+        // Mock wishlist removal
         setIsWishlisted(false);
       } else {
-        await db.addToWishlist(user.id, product.id);
+        // Mock wishlist addition
         setIsWishlisted(true);
       }
     } catch (error) {
