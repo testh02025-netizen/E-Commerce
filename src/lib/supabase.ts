@@ -24,7 +24,18 @@ export const supabase = supabaseClient || {
     signUp: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
     signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
     signOut: () => Promise.resolve({ error: null }),
-    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    getSession: () => Promise.resolve({ 
+      data: { 
+        session: {
+          user: {
+            id: 'demo-user-uuid',
+            email: 'demo@example.com'
+          },
+          access_token: 'demo-token'
+        }
+      }, 
+      error: null 
+    }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
     updateUser: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
   },
@@ -371,6 +382,14 @@ export const db = {
   },
 
   getAllProducts: () => {
+    if (!isSupabaseConfigured) {
+      const productsWithCategories = mockProducts.map(p => ({
+        ...p,
+        category: mockCategories.find(c => c.id === p.category_id)
+      }));
+      return Promise.resolve({ data: productsWithCategories, error: null });
+    }
+
     return supabase
       .from("products")
       .select(`
@@ -381,6 +400,28 @@ export const db = {
   },
 
   getAllUsers: () => {
+    if (!isSupabaseConfigured) {
+      const mockUsers = [
+        {
+          id: 'demo-user-1',
+          email: 'user1@demo.com',
+          full_name: 'Demo User 1',
+          phone: '+237123456789',
+          is_admin: false,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'demo-admin-1',
+          email: 'admin@demo.com',
+          full_name: 'Demo Admin',
+          phone: '+237987654321',
+          is_admin: true,
+          created_at: new Date().toISOString()
+        }
+      ];
+      return Promise.resolve({ data: mockUsers, error: null });
+    }
+
     return supabase
       .from("profiles")
       .select("*")
@@ -388,6 +429,33 @@ export const db = {
   },
 
   getAllOrders: () => {
+    if (!isSupabaseConfigured) {
+      const mockOrders = [
+        {
+          id: 'demo-order-1',
+          user_id: 'demo-user-1',
+          status: 'processing',
+          total: 85000,
+          payment_method: 'cod',
+          shipping_address: '123 Demo Street, Yaoundé',
+          phone: '+237123456789',
+          created_at: new Date().toISOString(),
+          order_items: [
+            {
+              id: 'demo-item-1',
+              product_id: 'adjustable-dumbbell',
+              quantity: 1,
+              price: 85000,
+              product: {
+                name: 'Adjustable Dumbbell Set'
+              }
+            }
+          ]
+        }
+      ];
+      return Promise.resolve({ data: mockOrders, error: null });
+    }
+
     return supabase
       .from("orders")
       .select(`

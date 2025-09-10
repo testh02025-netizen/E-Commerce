@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { Button } from '../components/ui/Button';
+import { Brain, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Star, Gift, TrendingUp, Users, ShoppingBag } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -6,6 +8,8 @@ import { db } from '../lib/supabase';
 import { Product, Category } from '../types';
 import { Button } from '../components/ui/Button';
 import { Footer } from '../components/ui/Footer';
+import { AIPersonalTrainer } from '../components/gamification/AIPersonalTrainer';
+import { VirtualFitnessCoach } from '../components/gamification/VirtualFitnessCoach';
 
 const HomePage: React.FC = () => {
   const { language, colorTheme, isAuthenticated, user } = useStore();
@@ -13,6 +17,8 @@ const HomePage: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAITrainer, setShowAITrainer] = useState(false);
+  const [showVirtualCoach, setShowVirtualCoach] = useState(false);
 
   const translations = {
     en: {
@@ -106,6 +112,32 @@ const HomePage: React.FC = () => {
   };
 
   const themeColors = getThemeColors();
+
+        {/* AI Features Banner */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4">
+          <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">🚀 New AI-Powered Features!</h2>
+              <p className="text-sm text-purple-100">Get personalized workouts and real-time form analysis</p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowAITrainer(true)}
+                className="bg-white/20 hover:bg-white/30 text-white flex items-center gap-2"
+              >
+                <Brain className="w-4 h-4" />
+                AI Trainer
+              </Button>
+              <Button
+                onClick={() => setShowVirtualCoach(true)}
+                className="bg-white/20 hover:bg-white/30 text-white flex items-center gap-2"
+              >
+                <Video className="w-4 h-4" />
+                Virtual Coach
+              </Button>
+            </div>
+          </div>
+        </div>
 
   return (
     <div className="min-h-screen">
@@ -311,6 +343,16 @@ const HomePage: React.FC = () => {
       </section>
 
       <Footer />
+      {showAITrainer && (
+        <AIPersonalTrainer
+          userProducts={user ? products.filter(p => p.category_id === 'fitness') : []}
+          userLevel="Intermediate"
+          onClose={() => setShowAITrainer(false)}
+        />
+      )}
+      {showVirtualCoach && (
+        <VirtualFitnessCoach onClose={() => setShowVirtualCoach(false)} />
+      )}
     </div>
   );
 };
