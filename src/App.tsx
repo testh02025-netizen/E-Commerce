@@ -76,25 +76,16 @@ function App() {
 
   const loadUserData = async (userId: string) => {
     try {
-      // For demo users, create a mock profile if it doesn't exist
-      let { data: profile, error } = await db.getProfile(userId);
+      const { data: profile, error } = await db.getProfile(userId);
       
-      if (error || !profile) {
-        // Create a demo profile for demo users
-        const demoProfile = {
-          id: userId,
-          email: userId.includes('admin') ? 'admin@demo.com' : 'user@demo.com',
-          is_admin: userId.includes('admin'),
-          full_name: userId.includes('admin') ? 'Demo Admin' : 'Demo User',
-          phone: '+237123456789',
-          loyalty_points: 150,
-          level: 'Bronze',
-          created_at: new Date().toISOString()
-        };
-        profile = demoProfile;
+      if (error) {
+        console.error('Error loading profile:', error);
+        return;
       }
       
-      setUser(profile);
+      if (profile) {
+        setUser(profile);
+      }
       
       // Load user rewards
       try {

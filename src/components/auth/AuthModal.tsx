@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useStore } from '../../store/useStore';
+import { auth, db } from '../../lib/supabase';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -161,16 +162,35 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     setSuccess('');
 
     try {
-      const result = await simulateAuth(email, password, !isLogin);
+      let result;
       
-      if (result.user) {
-        setUser(result.user);
+      if (isLogin) {
+        result = await auth.signIn(email, password);
+      } else {
+        result = await auth.signUp(email, password, {
+          full_name: fullName,
+        });
+      }
+      
+      if (result.data?.user && !result.error) {
+        // For signup, create profile
+        if (!isLogin) {
+          await db.createUser({
+            id: result.data.user.id,
+            email: result.data.user.email,
+            full_name: fullName,
+            is_admin: false
+          });
+        }
+        
         setSuccess(isLogin ? t.loginSuccess : t.signupSuccess);
         
         // Close modal after success
         setTimeout(() => {
           onClose();
         }, 1500);
+      } else {
+        setError(result.error?.message || 'Authentication failed');
       }
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please try again.');

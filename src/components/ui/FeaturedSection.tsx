@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Star, Clock, Zap } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { db } from '../../lib/supabase';
-import { mockProducts } from '../../data/mockData';
 import type { Product } from '../../types';
 
 interface FeaturedSectionProps {
@@ -11,9 +10,7 @@ interface FeaturedSectionProps {
 
 export function FeaturedSection({ onProductClick }: FeaturedSectionProps) {
   const { language, colorTheme } = useStore();
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(
-    mockProducts.filter(p => p.is_featured || p.discount_percentage > 0)
-  );
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const translations = {
@@ -58,12 +55,11 @@ export function FeaturedSection({ onProductClick }: FeaturedSectionProps) {
       const { data } = await db.getProducts();
       if (data && data.length > 0) {
         const featured = data.filter(product => product.is_featured || product.discount_percentage > 0);
-        if (featured.length > 0) {
-          setFeaturedProducts(featured.slice(0, 4));
-        }
+        setFeaturedProducts(featured.slice(0, 4));
       }
     } catch (error) {
-      console.warn('Error loading featured products, using mock data:', error);
+      console.error('Error loading featured products:', error);
+      setFeaturedProducts([]);
     }
   };
 

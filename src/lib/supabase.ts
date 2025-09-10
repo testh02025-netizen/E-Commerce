@@ -1,7 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 
-import { mockProducts, mockCategories } from '../data/mockData';
-
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -10,44 +8,13 @@ const isSupabaseConfigured = supabaseUrl && supabaseAnonKey &&
   !supabaseUrl.includes('your_supabase') && 
   !supabaseAnonKey.includes('your_supabase');
 
-let supabaseClient: any = null;
-
-if (isSupabaseConfigured) {
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-} else {
-  console.warn('Supabase not configured, using mock data for demo');
+if (!isSupabaseConfigured) {
+  throw new Error('Supabase configuration is required. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file');
 }
 
-// ✅ Raw supabase client (with fallback)
-export const supabase = supabaseClient || {
-  auth: {
-    signUp: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
-    signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
-    signOut: () => Promise.resolve({ error: null }),
-    getSession: () => Promise.resolve({ 
-      data: { 
-        session: {
-          user: {
-            id: 'demo-user-uuid',
-            email: 'demo@example.com'
-          },
-          access_token: 'demo-token'
-        }
-      }, 
-      error: null 
-    }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    updateUser: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
-  },
-  from: () => ({
-    select: () => ({ data: [], error: null }),
-    insert: () => ({ data: null, error: null }),
-    update: () => ({ data: null, error: null }),
-    delete: () => ({ data: null, error: null })
-  })
-};
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ✅ Auth helpers
+// Auth helpers
 export const auth = {
   signUp: (email: string, password: string, metadata?: any) =>
     supabase.auth.signUp({ 
@@ -71,24 +38,10 @@ export const auth = {
   updateUser: (updates: any) => supabase.auth.updateUser(updates),
 };
 
-// ✅ Database helpers
+// Database helpers
 export const db = {
   // Products
   getProducts: (categoryId?: string) => {
-    if (!isSupabaseConfigured) {
-      // Return mock data
-      let products = mockProducts.map(p => ({
-        ...p,
-        category: mockCategories.find(c => c.id === p.category_id)
-      }));
-      
-      if (categoryId) {
-        products = products.filter(p => p.category_id === categoryId);
-      }
-      
-      return Promise.resolve({ data: products, error: null });
-    }
-
     let query = supabase
       .from("products")
       .select(`
@@ -106,18 +59,6 @@ export const db = {
   },
 
   getProduct: (id: string) => {
-    if (!isSupabaseConfigured) {
-      const product = mockProducts.find(p => p.id === id);
-      if (product) {
-        const productWithCategory = {
-          ...product,
-          category: mockCategories.find(c => c.id === product.category_id)
-        };
-        return Promise.resolve({ data: productWithCategory, error: null });
-      }
-      return Promise.resolve({ data: null, error: { message: 'Product not found' } });
-    }
-
     return supabase
       .from("products")
       .select(`
@@ -130,28 +71,11 @@ export const db = {
 
   // Categories
   getCategories: () => {
-    if (!isSupabaseConfigured) {
-      return Promise.resolve({ data: mockCategories, error: null });
-    }
-
     return supabase.from("categories").select("*").order("name");
   },
 
   // Orders
   createOrder: (order: any) => {
-    console.log('Creating order in database:', order);
-    
-    if (!isSupabaseConfigured) {
-      // Mock order creation
-      const mockOrder = {
-        ...order,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      return Promise.resolve({ data: mockOrder, error: null });
-    }
-
     return supabase
       .from("orders")
       .insert([order])
@@ -160,18 +84,6 @@ export const db = {
   },
 
   createOrderItems: (orderItems: any[]) => {
-    console.log('Creating order items in database:', orderItems);
-    
-    if (!isSupabaseConfigured) {
-      // Mock order items creation
-      const mockItems = orderItems.map(item => ({
-        ...item,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString()
-      }));
-      return Promise.resolve({ data: mockItems, error: null });
-    }
-
     return supabase
       .from("order_items")
       .insert(orderItems)
@@ -179,11 +91,6 @@ export const db = {
   },
 
   getUserOrders: (userId: string) => {
-    if (!isSupabaseConfigured) {
-      // Mock user orders
-      return Promise.resolve({ data: [], error: null });
-    }
-
     return supabase
       .from("orders")
       .select(`
@@ -197,25 +104,7 @@ export const db = {
       .order("created_at", { ascending: false });
   },
 
-  // Fallback method for getUserOrders
-  getUserOrdersFallback: (userId: string) => {
-    if (!isSupabaseConfigured) {
-      return Promise.resolve({ data: [], error: null });
-    }
-
-    return supabase
-      .from("orders")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-  },
-
-  // Basic user orders without joins
   getBasicUserOrders: (userId: string) => {
-    if (!isSupabaseConfigured) {
-      return Promise.resolve({ data: [], error: null });
-    }
-
     return supabase
       .from("orders")
       .select("*")
@@ -223,12 +112,7 @@ export const db = {
       .order("created_at", { ascending: false });
   },
 
-  // Get order items separately
   getOrderItems: (orderId: string) => {
-    if (!isSupabaseConfigured) {
-      return Promise.resolve({ data: [], error: null });
-    }
-
     return supabase
       .from("order_items")
       .select(`
@@ -237,23 +121,9 @@ export const db = {
       `)
       .eq("order_id", orderId);
   },
+
   // User Profiles
   getProfile: (userId: string) => {
-    if (!isSupabaseConfigured) {
-      // Mock profile for demo users
-      const mockProfile = {
-        id: userId,
-        email: userId.includes('admin') ? 'admin@demo.com' : 'user@demo.com',
-        is_admin: userId.includes('admin'),
-        full_name: userId.includes('admin') ? 'Demo Admin' : 'Demo User',
-        phone: '+237123456789',
-        loyalty_points: 150,
-        level: 'Bronze',
-        created_at: new Date().toISOString()
-      };
-      return Promise.resolve({ data: mockProfile, error: null });
-    }
-
     return supabase
       .from("profiles")
       .select("*")
@@ -262,11 +132,6 @@ export const db = {
   },
 
   updateProfile: (userId: string, updates: any) => {
-    if (!isSupabaseConfigured) {
-      // Mock profile update
-      return Promise.resolve({ data: { id: userId, ...updates }, error: null });
-    }
-
     return supabase
       .from("profiles")
       .update(updates)
@@ -275,7 +140,7 @@ export const db = {
       .single();
   },
 
-  // Categories
+  // Categories Management
   createCategory: (category: any) => {
     return supabase.from("categories").insert(category).select().single();
   },
@@ -290,68 +155,57 @@ export const db = {
 
   // Rewards System
   getUserRewards: (userId: string) => {
-    // Mock rewards for demo since table doesn't exist
-    return Promise.resolve({
-      data: [
-        {
-          id: '1',
-          user_id: userId,
-          type: 'daily_login',
-          title: 'Daily Login Bonus',
-          description: 'Welcome back! Here are your daily points.',
-          points: 50,
-          claimed: false,
-          created_at: new Date().toISOString()
-        }
-      ],
-      error: null
-    });
+    return supabase
+      .from("user_rewards")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
   },
 
   claimReward: (rewardId: string) => {
-    // Mock claim for demo
-    return Promise.resolve({ data: null, error: null });
+    return supabase
+      .from("user_rewards")
+      .update({ claimed: true })
+      .eq("id", rewardId);
   },
 
   createReward: (reward: any) => {
-    // Mock create for demo
-    return Promise.resolve({ data: reward, error: null });
+    return supabase
+      .from("user_rewards")
+      .insert(reward)
+      .select()
+      .single();
   },
 
   // Achievements
   getAchievements: () => {
-    // Mock achievements for demo
-    return Promise.resolve({
-      data: [
-        {
-          id: '1',
-          title: 'First Purchase',
-          description: 'Complete your first order',
-          icon: 'trophy',
-          points: 100,
-          requirement_type: 'orders',
-          requirement_value: 1
-        }
-      ],
-      error: null
-    });
+    return supabase
+      .from("achievements")
+      .select("*")
+      .order("points", { ascending: false });
   },
 
   getUserAchievements: (userId: string) => {
-    // Mock user achievements for demo
-    return Promise.resolve({ data: [], error: null });
+    return supabase
+      .from("user_achievements")
+      .select(`
+        *,
+        achievement:achievements(*)
+      `)
+      .eq("user_id", userId);
   },
 
   // Surprise Events
   getActiveSurpriseEvents: () => {
-    // Mock surprise events for demo
-    return Promise.resolve({ data: [], error: null });
+    return supabase
+      .from("surprise_events")
+      .select("*")
+      .eq("active", true)
+      .gte("end_date", new Date().toISOString());
   },
 
   // Admin functions
   createUser: async (userData: any) => {
-    // In a real app, you'd use supabase.auth.admin.createUser
-    // For demo purposes, we'll create a profile directly
     return supabase.from("profiles").insert({
       id: crypto.randomUUID(),
       email: userData.email,
@@ -382,14 +236,6 @@ export const db = {
   },
 
   getAllProducts: () => {
-    if (!isSupabaseConfigured) {
-      const productsWithCategories = mockProducts.map(p => ({
-        ...p,
-        category: mockCategories.find(c => c.id === p.category_id)
-      }));
-      return Promise.resolve({ data: productsWithCategories, error: null });
-    }
-
     return supabase
       .from("products")
       .select(`
@@ -400,28 +246,6 @@ export const db = {
   },
 
   getAllUsers: () => {
-    if (!isSupabaseConfigured) {
-      const mockUsers = [
-        {
-          id: 'demo-user-1',
-          email: 'user1@demo.com',
-          full_name: 'Demo User 1',
-          phone: '+237123456789',
-          is_admin: false,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 'demo-admin-1',
-          email: 'admin@demo.com',
-          full_name: 'Demo Admin',
-          phone: '+237987654321',
-          is_admin: true,
-          created_at: new Date().toISOString()
-        }
-      ];
-      return Promise.resolve({ data: mockUsers, error: null });
-    }
-
     return supabase
       .from("profiles")
       .select("*")
@@ -429,33 +253,6 @@ export const db = {
   },
 
   getAllOrders: () => {
-    if (!isSupabaseConfigured) {
-      const mockOrders = [
-        {
-          id: 'demo-order-1',
-          user_id: 'demo-user-1',
-          status: 'processing',
-          total: 85000,
-          payment_method: 'cod',
-          shipping_address: '123 Demo Street, Yaoundé',
-          phone: '+237123456789',
-          created_at: new Date().toISOString(),
-          order_items: [
-            {
-              id: 'demo-item-1',
-              product_id: 'adjustable-dumbbell',
-              quantity: 1,
-              price: 85000,
-              product: {
-                name: 'Adjustable Dumbbell Set'
-              }
-            }
-          ]
-        }
-      ];
-      return Promise.resolve({ data: mockOrders, error: null });
-    }
-
     return supabase
       .from("orders")
       .select(`
@@ -486,7 +283,7 @@ export const db = {
   },
 };
 
-// ✅ Storage helpers
+// Storage helpers
 export const storage = {
   uploadFile: (bucket: string, path: string, file: File) =>
     supabase.storage.from(bucket).upload(path, file),

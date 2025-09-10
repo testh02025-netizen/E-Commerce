@@ -171,12 +171,6 @@ export function CheckoutForm({ onSuccess, onBack }: CheckoutFormProps) {
         throw new Error('User not authenticated');
       }
 
-      // Get current session to ensure we have proper auth context
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       const orderData = {
         user_id: user.id,
         total: getCartTotal(),

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from '../components/ui/Button';
-import { Brain, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Star, Gift, TrendingUp, Users, ShoppingBag } from 'lucide-react';
+import { Zap, Star, Gift, TrendingUp, Users, ShoppingBag, Brain, Video } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { db } from '../lib/supabase';
 import { Product, Category } from '../types';
@@ -345,7 +343,7 @@ const HomePage: React.FC = () => {
       <Footer />
       {showAITrainer && (
         <AIPersonalTrainer
-          userProducts={user ? products.filter(p => p.category_id === 'fitness') : []}
+          userProducts={featuredProducts.filter(p => p.category_id === 'cat_sports')}
           userLevel="Intermediate"
           onClose={() => setShowAITrainer(false)}
         />
